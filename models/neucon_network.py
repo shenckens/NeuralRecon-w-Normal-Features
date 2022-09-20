@@ -274,7 +274,7 @@ class NeuConNet(nn.Module):
         n_p = occ_target.sum()
         if n_p == 0:
             logger.warning('target: no valid voxel when computing loss')
-            return torch.Tensor([0.0]).cuda()[0] * tsdf.sum()
+            return torch.Tensor([0.0]).cuda()[0] * occ.sum()
         w_for_1 = (n_all - n_p).float() / n_p
         w_for_1 *= pos_weight
 
@@ -310,6 +310,8 @@ class NeuConNet(nn.Module):
             residuals_roi = residuals[idx, anchors_target]
             residual_loss = F.smooth_l1_loss(residuals_roi * 20, residual_target * 20)
 
+        else:
+            class_loss = residual_loss = 0
         # compute final loss
         loss = loss_weight[0] * occ_loss + loss_weight[1] * tsdf_loss + class_loss + residual_loss
         return loss
