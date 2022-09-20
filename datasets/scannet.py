@@ -133,7 +133,6 @@ class ScanNetDataset(Dataset):
             'plane_points': plane_points,
             'indices': indices,
             'vol_origin': meta['vol_origin'],
-            'vol_dim': meta['vol_dim'],
             'scene': meta['scene'],
             'fragment': meta['scene'] + '_' + str(meta['fragment_id']),
             'epoch': [self.epoch],
