@@ -198,7 +198,7 @@ class NeuConNet(nn.Module):
             residuals = residuals.view(-1, 7, 3)
 
             # -------compute loss-------
-            if tsdf_target is not None:
+            if tsdf_target is not None and anchors_gt is not None and self.training:
                 loss = self.compute_loss(tsdf, occ, tsdf_target, occ_target, class_logits, residuals, anchors_gt, residual_gt, r_coords,
                                          mask=grid_mask,
                                          pos_weight=self.cfg.POS_WEIGHT)
