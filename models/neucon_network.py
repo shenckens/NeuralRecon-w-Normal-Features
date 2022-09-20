@@ -61,8 +61,8 @@ class NeuConNet(nn.Module):
                     nn.ReLU(),
                     nn.Linear(channels[i], 7 * 3, bias=True)
                 ))
-        self.normal_anchors = torch.from_numpy(np.load(self.cfg.NORMAL_ANCHOR_PATH)).float()
-        self.normal_anchors = torch.nn.parameter.Parameter(self.normal_anchors, requires_grad=False)
+        # self.normal_anchors = torch.from_numpy(np.load(self.cfg.NORMAL_ANCHOR_PATH)).float()
+        # self.normal_anchors = torch.nn.parameter.Parameter(self.normal_anchors, requires_grad=False)
 
     def get_target(self, coords, inputs, scale):
         '''
