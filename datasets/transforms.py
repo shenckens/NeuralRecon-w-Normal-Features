@@ -417,7 +417,7 @@ class RandomTransformSpace(object):
 
             data.pop('indices')
             data.pop('plane_points')
-            data.pop('vol_dim')
+            # data.pop('vol_dim')
         data.pop('epoch')
         return data
 
