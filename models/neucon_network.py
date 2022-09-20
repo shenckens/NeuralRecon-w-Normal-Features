@@ -199,7 +199,7 @@ class NeuConNet(nn.Module):
 
             # -------compute loss-------
             if tsdf_target is not None:
-                loss = self.compute_loss(tsdf, occ, tsdf_target, occ_target,
+                loss = self.compute_loss(tsdf, occ, tsdf_target, occ_target, class_logits, residuals, anchors_gt, residual_gt, r_coords,
                                          mask=grid_mask,
                                          pos_weight=self.cfg.POS_WEIGHT)
             else:
