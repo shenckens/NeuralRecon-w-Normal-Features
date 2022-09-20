@@ -269,6 +269,7 @@ class NeuConNet(nn.Module):
             occ_target = occ_target[mask]
             class_logits = class_logits[mask]
             residuals = residuals[mask]
+            r_coords = r_coords[mask]
 
         n_all = occ_target.shape[0]
         n_p = occ_target.sum()
@@ -288,12 +289,14 @@ class NeuConNet(nn.Module):
         # plane loss
         class_logits = class_logits[occ_target]
         residuals = residuals[occ_target]
+        r_coords = r_coords[occ_target]
 
         valid = torch.nonzero(tsdf_target >= 0, as_tuple=False).squeeze(1)
         if len(valid) != 0:
             tsdf_target = tsdf_target[valid]
             class_logits = class_logits[valid]
             residuals = residuals[valid]
+            r_coords = r_coords[valid]
 
 
             # extract gt for planes
