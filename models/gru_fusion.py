@@ -215,6 +215,7 @@ class GRUFusion(nn.Module):
         occ_target_all = None
         values_all = None
         updated_coords_all = None
+        updated_r_coords_all = None
 
         # ---incremental fusion----
         for i in range(batch_size):
@@ -285,6 +286,7 @@ class GRUFusion(nn.Module):
                 x = PointTensor(values, r_coords)
 
                 values = self.fusion_nets[scale](h, x)
+                r_coords[:, 3] = i # added in myself
 
             # feed back to global volume (direct substitute)
             self.update_map(values, updated_coords, target_volume, valid, valid_target, relative_origin, scale)
@@ -300,9 +302,13 @@ class GRUFusion(nn.Module):
                                            dim=1)
                 updated_coords_all = torch.cat([updated_coords_all, updated_coords])
                 values_all = torch.cat([values_all, values])
+                if r_coords is not None:
+                    updated_r_coords_all = torch.cat([updated_r_coords_all, r_coords])
+
                 if tsdf_target_all is not None:
                     tsdf_target_all = torch.cat([tsdf_target_all, tsdf_target])
                     occ_target_all = torch.cat([occ_target_all, occ_target])
+
 
             if self.direct_substitude and save_mesh:
                 outputs = self.save_mesh(scale, outputs, self.scene_name[scale])
@@ -310,4 +316,4 @@ class GRUFusion(nn.Module):
         if self.direct_substitude:
             return outputs
         else:
-            return updated_coords_all, values_all, tsdf_target_all, occ_target_all
+            return updated_coords_all, updated_r_coords_all, values_all, tsdf_target_all, occ_target_all

@@ -1,4 +1,5 @@
 import importlib
+from .collate_fn import collate_fn
 
 
 # find the dataset definition by name, for example ScanNetDataset (scannet.py)

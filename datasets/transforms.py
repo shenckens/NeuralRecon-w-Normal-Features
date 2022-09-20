@@ -51,6 +51,11 @@ class ToTensor(object):
             for i in range(len(data['tsdf_list_full'])):
                 if not torch.is_tensor(data['tsdf_list_full'][i]):
                     data['tsdf_list_full'][i] = torch.Tensor(data['tsdf_list_full'][i])
+        if 'planes' in data.keys():
+            data['planes'] = torch.Tensor(np.stack(data['planes']))
+            data['indices'] = torch.Tensor(data['indices'])
+            for i in range(len(data['plane_points'])):
+                data['plane_points'][i] = torch.Tensor(data['plane_points'][i])
         return data
 
 
@@ -77,6 +82,8 @@ class IntrinsicsPoseToProjection(object):
         rotation_matrix4x4 = np.eye(4)
         rotation_matrix4x4[:3, :3] = rotation_matrix
         data['world_to_aligned_camera'] = torch.from_numpy(rotation_matrix4x4).float() @ middle_pose.inverse()
+        data['middle_pose'] = middle_pose
+        data['camera_to_aligned_camera'] = torch.from_numpy(rotation_matrix4x4).float()
 
         proj_matrices = []
         for intrinsics, extrinsics in zip(data['intrinsics'], data['extrinsics']):
@@ -91,8 +98,8 @@ class IntrinsicsPoseToProjection(object):
             view_proj_matrics = torch.stack(view_proj_matrics)
             proj_matrices.append(view_proj_matrics)
         data['proj_matrices'] = torch.stack(proj_matrices)
-        data.pop('intrinsics')
-        data.pop('extrinsics')
+        # data.pop('intrinsics')
+        # data.pop('extrinsics')
         return data
 
 
@@ -133,6 +140,63 @@ class ResizeImage(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0})'.format(self.size)
+
+
+class GeneratePlaneGT(object):
+    """ Resize everything to given size.
+
+    Intrinsics are assumed to refer to image prior to resize.
+    After resize everything (ex: depth) should have the same intrinsics
+    """
+
+    def __init__(self, normal_anchor_path):
+        self.normal_anchors = torch.from_numpy(np.load(normal_anchor_path)).float()
+
+    def __call__(self, data):
+        if 'planes' in data.keys():
+            if len(data['planes']) != 0:
+                # world to camera
+                planes_gt = data['planes']
+                planes_gt = (data['middle_pose'].transpose(0,1) @ planes_gt.transpose(0, 1)).transpose(0, 1)
+                # reduce 2*pi to pi
+                inverse_id = torch.nonzero(planes_gt[:, 2] > 0, as_tuple=False).squeeze(1)
+                planes_gt[inverse_id] = -planes_gt[inverse_id]
+                # camera to aligned camera
+                planes_gt = (torch.inverse(data['camera_to_aligned_camera']).transpose(0, 1)
+                             @ planes_gt.transpose(0, 1)).transpose(0, 1)
+
+                data['planes_trans'] = planes_gt
+
+                # generate anchors gt and residual
+                normal_gt = planes_gt[:, :3]
+                normal_gt = normal_gt / \
+                    torch.norm(normal_gt, dim=-1, keepdim=True)
+                distances = torch.norm(normal_gt.unsqueeze(1) - self.normal_anchors.unsqueeze(0), dim=-1)
+                plane_anchors_idx = distances.argmin(-1)
+                residual = normal_gt - self.normal_anchors[plane_anchors_idx]
+
+                mean_xyz = data['mean_xyz']
+                nonvalid = mean_xyz.sum(-1) == 0
+                mean_xyz = torch.cat([mean_xyz, torch.ones_like(mean_xyz[:, :1])], dim=1)
+                data['mean_xyz'] = mean_xyz \
+                    @ data['world_to_aligned_camera'][:3, :].permute(1, 0).contiguous()
+                data['mean_xyz'][nonvalid] = 0
+                # # test
+                # normals_gt_test = self.normal_anchors[plane_anchors_idx] + residual
+                # normals_gt_test = torch.cat([normals_gt_test, torch.ones_like(normals_gt_test[:, :1])], dim=1)
+                # normals_gt_test = (data['world_to_aligned_camera'].transpose(0, 1) @ normals_gt_test.transpose(0, 1)).transpose(0, 1)
+                # normals_gt_test = normals_gt_test[:, :3]
+
+                data['plane_anchors'] = plane_anchors_idx
+                data['residual'] = residual
+            else:
+                data['planes_trans'] = data['planes']
+                data['plane_anchors'] = data['planes'].long()
+                data['residual'] = data['planes']
+
+        data.pop('middle_pose')
+        data.pop('camera_to_aligned_camera')
+        return data
 
 
 class RandomTransformSpace(object):
@@ -336,6 +400,24 @@ class RandomTransformSpace(object):
                 data['occ_list'].append(occ_vol)
             data.pop('tsdf_list_full')
             data.pop('depth')
+
+        if 'planes' in data.keys():
+
+            planes = data['planes']
+            plane_points = data['plane_points']
+            planes_valid = []
+
+            for i, points in enumerate(plane_points):
+
+                # plane parameters from world to augmented world
+                plane = torch.transpose(transform, 0, 1) @ planes[i]
+                planes_valid.append(plane)
+
+            data['planes'] = torch.stack(planes_valid)
+
+            data.pop('indices')
+            data.pop('plane_points')
+            data.pop('vol_dim')
         data.pop('epoch')
         return data
 
