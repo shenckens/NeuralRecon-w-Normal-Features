@@ -5,7 +5,7 @@ import torch
 def collate_fn(list_data):
     # Concatenate all lists
 
-    tsdf_list = list(zip(*[item['tsdf_list'] for item in list_data]))
+    tsdf_list = list(zip(*[item['tsdf_list_full'] for item in list_data]))
     for i in range(len(tsdf_list)):
         tsdf_list[i] = torch.stack(tsdf_list[i]).long()
 
