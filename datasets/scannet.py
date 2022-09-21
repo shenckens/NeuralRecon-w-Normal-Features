@@ -15,8 +15,16 @@ class ScanNetDataset(Dataset):
         self.mode = mode
         self.n_views = nviews
         self.transforms = transform
+        # self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         self.tsdf_file = 'all_tsdf_{}'.format(self.n_views)
-        self.planes_file = 'planes_{}'.format(self.n_views)
+        # self.device = torch.device('cuda:0')
+        # if nnet_args:
+        #     self.nnet = NNET(nnet_args)
+        #     loadckpt = os.path.join(self.datapath, 'scannet.pt')
+        #     state_dict = torch.load(loadckpt)
+        #     self.nnet.load_state_dict(state_dict['model'])
+        #     self.nnet.to(self.device)
+        #     self.nnet.eval()
 
         assert self.mode in ["train", "val", "test"]
         self.metas = self.build_list()
@@ -29,8 +37,6 @@ class ScanNetDataset(Dataset):
         self.epoch = None
         self.tsdf_cashe = {}
         self.max_cashe = 100
-        self.planes_cashe = {}
-        self.planes_max_cashe = 1
 
     def build_list(self):
         with open(os.path.join(self.datapath, self.tsdf_file, 'fragments_{}.pkl'.format(self.mode)), 'rb') as f:
@@ -58,22 +64,18 @@ class ScanNetDataset(Dataset):
         depth_im[depth_im > 3.0] = 0
         return depth_im
 
-    def read_scene_planes(self, data_path, scene):
-        if scene not in self.planes_cashe.keys():
-            if len(self.planes_cashe) > self.planes_max_cashe:
-                self.planes_cashe = {}
-            planes = np.load(os.path.join(
-                data_path, scene, 'annotation', 'planes.npy'))
-            # a, b, c, -1
-            planes = np.concatenate(
-                [planes, - np.ones_like(planes[:, :1])], axis=-1)
-            plane_points = list(
-                np.load(os.path.join(data_path, scene, 'annotation', 'plane_points.npy'), allow_pickle=True))
-
-            indices = np.load(os.path.join(data_path, scene, 'indices.npz'))
-            indices = indices.f.arr_0
-            self.planes_cashe[scene] = [planes, plane_points, indices]
-        return self.planes_cashe[scene]
+    # def estm_norm_prior(self, filepath):
+    #     img = self.read_img(filepath)
+    #     img = np.array(img).astype(np.float32) / 255.0
+    #     img = torch.from_numpy(img).permute(2, 0, 1)
+    #     img = self.normalize(img)
+    #     img.to(self.device)
+    #     norm_out_list, _, _ = self.nnet(img)
+    #     # includes norm and kappa (B, C, H, W) (1, 6, 480, 640)
+    #     # remove Batchsize dimension
+    #     norm_out = norm_out_list[-1].squeeze().detach()
+    #     img.detach()
+    #     return norm_out
 
     def read_scene_volumes(self, data_path, scene):
         if scene not in self.tsdf_cashe.keys():
@@ -98,7 +100,6 @@ class ScanNetDataset(Dataset):
         intrinsics_list = []
 
         tsdf_list = self.read_scene_volumes(os.path.join(self.datapath, self.tsdf_file), meta['scene'])
-        planes, plane_points, indices = self.read_scene_planes(os.path.join(self.datapath, self.planes_file), meta['scene'])
 
         for i, vid in enumerate(meta['image_ids']):
             # load images
@@ -111,6 +112,11 @@ class ScanNetDataset(Dataset):
                 self.read_depth(
                     os.path.join(self.datapath, self.source_path, meta['scene'], 'depth', '{}.png'.format(vid)))
             )
+
+            # normals.append(
+            #     self.estm_norm_prior(
+            #         os.path.join(self.datapath, self.source_path, meta['scene'], 'color', '{}.jpg'.format(vid)))
+            # )
 
             # load intrinsics and extrinsics
             intrinsics, extrinsics = self.read_cam_file(os.path.join(self.datapath, self.source_path, meta['scene']),
@@ -129,9 +135,6 @@ class ScanNetDataset(Dataset):
             'intrinsics': intrinsics,
             'extrinsics': extrinsics,
             'tsdf_list_full': tsdf_list,
-            'planes': planes,
-            'plane_points': plane_points,
-            'indices': indices,
             'vol_origin': meta['vol_origin'],
             'scene': meta['scene'],
             'fragment': meta['scene'] + '_' + str(meta['fragment_id']),

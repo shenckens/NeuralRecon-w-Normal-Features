@@ -38,11 +38,9 @@ class NeuConNet(nn.Module):
             self.gru_fusion = GRUFusion(cfg, channels)
         # sparse conv
         self.sp_convs = nn.ModuleList()
-        # MLPs that predict tsdf, occupancy, anchors and residuals.
+        # MLPs that predict tsdf and occupancy.
         self.tsdf_preds = nn.ModuleList()
         self.occ_preds = nn.ModuleList()
-        self.plane_class = nn.ModuleList()
-        self.plane_residual = nn.ModuleList()
         for i in range(len(cfg.THRESHOLDS)):
             self.sp_convs.append(
                 SPVCNN(num_classes=1, in_channels=ch_in[i],
@@ -53,16 +51,6 @@ class NeuConNet(nn.Module):
             )
             self.tsdf_preds.append(nn.Linear(channels[i], 1))
             self.occ_preds.append(nn.Linear(channels[i], 1))
-            self.plane_class.append(nn.Linear(channels[i], 7))
-            self.plane_residual.append(
-                nn.Sequential(
-                    nn.Linear(channels[i], channels[i], bias=True),
-                    nn.BatchNorm1d(channels[i]),
-                    nn.ReLU(),
-                    nn.Linear(channels[i], 7 * 3, bias=True)
-                ))
-        # self.normal_anchors = torch.from_numpy(np.load(self.cfg.NORMAL_ANCHOR_PATH)).float()
-        # self.normal_anchors = torch.nn.parameter.Parameter(self.normal_anchors, requires_grad=False)
 
     def get_target(self, coords, inputs, scale):
         '''
@@ -123,14 +111,6 @@ class NeuConNet(nn.Module):
         }
         '''
         bs = features[0][0].shape[0]
-
-        if "plane_anchors" in inputs.keys():
-            anchors_gt = inputs['plane_anchors']
-            residual_gt = inputs['residual']
-            planes_gt = inputs['planes_trans']
-        else:
-            anchors_gt = residual_gt = planes_gt = None
-
         pre_feat = None
         pre_coords = None
         loss_dict = {}
@@ -185,21 +165,16 @@ class NeuConNet(nn.Module):
 
             # ----gru fusion----
             if self.cfg.FUSION.FUSION_ON:
-                up_coords, r_coords, feat, tsdf_target, occ_target = self.gru_fusion(up_coords, feat, inputs, i)
+                up_coords, feat, tsdf_target, occ_target = self.gru_fusion(up_coords, feat, inputs, i)
                 if self.cfg.FUSION.FULL:
                     grid_mask = torch.ones_like(feat[:, 0]).bool()
 
             tsdf = self.tsdf_preds[i](feat)
             occ = self.occ_preds[i](feat)
 
-            # class (anchor) and residual
-            class_logits = self.plane_class[i](feat)
-            residuals = self.plane_residual[i](feat)
-            residuals = residuals.view(-1, 7, 3)
-
             # -------compute loss-------
-            if tsdf_target is not None and anchors_gt is not None and self.training:
-                loss = self.compute_loss(tsdf, occ, tsdf_target, occ_target, class_logits, residuals, anchors_gt, residual_gt, r_coords,
+            if tsdf_target is not None:
+                loss = self.compute_loss(tsdf, occ, tsdf_target, occ_target,
                                          mask=grid_mask,
                                          pos_weight=self.cfg.POS_WEIGHT)
             else:
@@ -243,7 +218,7 @@ class NeuConNet(nn.Module):
         return outputs, loss_dict
 
     @staticmethod
-    def compute_loss(tsdf, occ, tsdf_target, occ_target, class_logits, residuals, anchors_gt, residual_gt, r_coords, loss_weight=(1, 1),
+    def compute_loss(tsdf, occ, tsdf_target, occ_target, loss_weight=(1, 1),
                      mask=None, pos_weight=1.0):
         '''
 
@@ -267,15 +242,12 @@ class NeuConNet(nn.Module):
             occ = occ[mask]
             tsdf_target = tsdf_target[mask]
             occ_target = occ_target[mask]
-            class_logits = class_logits[mask]
-            residuals = residuals[mask]
-            r_coords = r_coords[mask]
 
         n_all = occ_target.shape[0]
         n_p = occ_target.sum()
         if n_p == 0:
             logger.warning('target: no valid voxel when computing loss')
-            return torch.Tensor([0.0]).cuda()[0] * occ.sum()
+            return torch.Tensor([0.0]).cuda()[0] * tsdf.sum()
         w_for_1 = (n_all - n_p).float() / n_p
         w_for_1 *= pos_weight
 
@@ -286,35 +258,7 @@ class NeuConNet(nn.Module):
         tsdf = apply_log_transform(tsdf[occ_target])
         tsdf_target = apply_log_transform(tsdf_target[occ_target])
         tsdf_loss = torch.mean(torch.abs(tsdf - tsdf_target))
-        # plane loss
-        class_logits = class_logits[occ_target]
-        residuals = residuals[occ_target]
-        r_coords = r_coords[occ_target]
 
-        valid = torch.nonzero(tsdf_target >= 0, as_tuple=False).squeeze(1)
-        if len(valid) != 0:
-            tsdf_target = tsdf_target[valid]
-            class_logits = class_logits[valid]
-            residuals = residuals[valid]
-            r_coords = r_coords[valid]
-
-
-            # extract gt for planes
-            bs = len(anchors_gt)
-            anchors_target = torch.zeros([tsdf_target.shape[0]], device=tsdf_target.device).long()
-            residual_target = torch.zeros([tsdf_target.shape[0], 3], device=tsdf_target.device)
-            for b in range(bs):
-                batch_ind = torch.nonzero(r_coords[:, -1] == b, as_tuple=False).squeeze(1)
-                anchors_target[batch_ind] = anchors_gt[b][tsdf_target[batch_ind]]
-                residual_target[batch_ind] = residual_gt[b][tsdf_target[batch_ind]]
-
-            class_loss = F.cross_entropy(class_logits, anchors_target)
-            idx = torch.arange(residuals.shape[0], device=residuals.device).long()
-            residuals_roi = residuals[idx, anchors_target]
-            residual_loss = F.smooth_l1_loss(residuals_roi * 20, residual_target * 20)
-
-        else:
-            class_loss = residual_loss = 0
         # compute final loss
-        loss = loss_weight[0] * occ_loss + loss_weight[1] * tsdf_loss + class_loss + residual_loss
+        loss = loss_weight[0] * occ_loss + loss_weight[1] * tsdf_loss
         return loss
