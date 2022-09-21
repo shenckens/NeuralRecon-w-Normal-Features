@@ -99,11 +99,17 @@ class NeuralRecon(nn.Module):
             # in: images; out: feature maps
             features = [self.backbone2d(img) for img in imgs]
             normals = []
+            kappas = []
             with torch.no_grad():
                 for img in imgs:
                     normal_list, _, _ = self.nnet(img)
                     normal = normal_list[-1][:, :3, :, :]
                     normals.append(normal)
+                    kappa = normal_list[-1][:, 3:, :, :]
+                    if self.one_time:
+                        print(kappa)
+                        self.one_time = False
+                    kappas.append(kappa)
             # Normal rgb imgs through backbone feature extraction.
             if self.prior_through_backbone:
                 normals_features = [self.backbone2d(normal) for normal in normals]
