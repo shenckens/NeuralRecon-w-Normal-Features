@@ -349,11 +349,13 @@ def memory_and_time(warmup = True):
                         starter.record()
                         _, _ = model(sample)
                         ender.record()
-                        after_inference_mems.append(torch.cuda.memory_allocated(0))
+                        after_inference_mem = torch.cuda.memory_allocated(0)
+                        after_inference_mems.append(after_inference_mem)
                         # WAIT FOR GPU SYNC
                         torch.cuda.synchronize()
                         time = starter.elapsed_time(ender)
                         times.append(time)
+                        logger.info("iter {}/{} ## gpu mem {} ## gpu inference time {}".format(batch_idx, len(TestImgLoader), after_inference_mem, time))
 
     stats['times'] = times
     stats['mean_time'] = np.array(times).mean()
