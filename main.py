@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 import datetime
+import numpy as np
 
 import torch
 import torch.distributed as dist
@@ -309,6 +310,61 @@ def test(from_latest=True):
 
         time.sleep(10)
 
+def memory_and_time(warmup = True):
+    start_mem = torch.cuda.memory_allocated(0)
+    stats = {}
+    times = []
+    after_inference_mems = []
+    ckpt_list = []
+    starter = torch.cuda.Event(enable_timing=True)
+    ender = torch.cuda.Event(enable_timing=True)
+    batch_len = len(TestImgLoader)
+
+    while True:
+        saved_models = [fn for fn in os.listdir(cfg.LOGDIR) if fn.endswith(".ckpt")]
+        saved_models = sorted(saved_models, key=lambda x: int(x.split('_')[-1].split('.')[0]))
+        saved_models = saved_models[-1:]
+        for ckpt in saved_models:
+            if ckpt not in ckpt_list:
+                # use the latest checkpoint file
+                loadckpt = os.path.join(cfg.LOGDIR, ckpt)
+                logger.info("resuming " + str(loadckpt))
+                state_dict = torch.load(loadckpt, map_location=0)
+                model.load_state_dict(state_dict['model'], strict=False)
+                model.eval()
+                # free state_dict variable from gpu
+                del state_dict
+                after_loading_model_mem = torch.cuda.memory_allocated(0)
+
+                TestImgLoader.dataset.tsdf_cashe = {}
+
+                for batch_idx, sample in enumerate(TestImgLoader):
+                    sample.cuda()
+                    with torch.no_grad():
+                        # GPU warm-up
+                        if warmup:
+                            for _ in range(10):
+                                _, _ = model(sample)
+                            warmup = False
+                        starter.record()
+                        _, _ = model(sample)
+                        ender.record()
+                        after_inference_mems.append(torch.cuda.memory_allocated(0))
+                        # WAIT FOR GPU SYNC
+                        torch.cuda.synchronize()
+                        time = starter.elapsed_time(ender)
+                        times.append(time)
+
+    stats['times'] = times
+    stats['mean_time'] = np.array(times).mean()
+    stats['std_time'] = np.array(times).std()
+    stats['start_mem'] = start_mem
+    stats['model_mem'] = after_loading_model_mem
+    stats['inference_mems'] = after_inference_mems
+    stats['inference_mean'] = np.array(after_inference_mems).mean()
+    stats['inference_std'] = np.array(after_inference_mems).std()
+
+    return stats
 
 def train_sample(sample):
     model.train()
@@ -337,3 +393,5 @@ if __name__ == '__main__':
         train()
     elif cfg.MODE == "test":
         test()
+    elif cfg.MODE == "time":
+        memory_and_time()

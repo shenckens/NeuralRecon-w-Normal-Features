@@ -1,9 +1,9 @@
 DATASET: 'scannet'
-BATCH_SIZE: 2
+BATCH_SIZE: 1
 SAVE_SCENE_MESH: True
-LOGDIR: './checkpoints/vanilla/47'
+LOGDIR: './checkpoints/vanilla'
 SAVE_FREQ: 1
-MODE: 'test'
+MODE: 'time'
 
 TRAIN:
   PATH: '/project/henckens/data/scannet'
