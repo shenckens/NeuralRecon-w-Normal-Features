@@ -340,22 +340,22 @@ def memory_and_time(warmup = True):
                 TestImgLoader.dataset.tsdf_cashe = {}
 
                 for batch_idx, sample in enumerate(TestImgLoader):
-                    with torch.no_grad():
-                        # GPU warm-up
-                        if warmup:
-                            for _ in range(10):
-                                _, _ = model(sample)
-                            warmup = False
-                        starter.record()
-                        _, _ = model(sample)
-                        ender.record()
-                        after_inference_mem = torch.cuda.memory_allocated(0)
-                        after_inference_mems.append(after_inference_mem)
-                        # WAIT FOR GPU SYNC
-                        torch.cuda.synchronize()
-                        time = starter.elapsed_time(ender)
-                        times.append(time)
-                        logger.info("iter {}/{} ## gpu mem {} ## gpu inference time {}".format(batch_idx, len(TestImgLoader), after_inference_mem, time))
+                    # with torch.no_grad():
+                    # GPU warm-up
+                    if warmup:
+                        for _ in range(10):
+                            _, _ = model(sample)
+                        warmup = False
+                    starter.record()
+                    _, _ = model(sample)
+                    ender.record()
+                    after_inference_mem = torch.cuda.memory_allocated(0)
+                    after_inference_mems.append(after_inference_mem)
+                    # WAIT FOR GPU SYNC
+                    torch.cuda.synchronize()
+                    time = starter.elapsed_time(ender)
+                    times.append(time)
+                    logger.info("iter {}/{} ## gpu mem {} ## gpu inference time {}".format(batch_idx, len(TestImgLoader), after_inference_mem, time))
 
     stats['times'] = times
     stats['mean_time'] = np.array(times).mean()
