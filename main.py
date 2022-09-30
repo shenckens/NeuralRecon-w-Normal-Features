@@ -3,6 +3,7 @@ import os
 import time
 import datetime
 import numpy as np
+import pickle
 
 import torch
 import torch.distributed as dist
@@ -394,4 +395,6 @@ if __name__ == '__main__':
     elif cfg.MODE == "test":
         test()
     elif cfg.MODE == "time":
-        memory_and_time()
+        results = memory_and_time()
+        with open('memory_and_time.pkl', 'wb') as f:
+            pickle.dump(results, f)
