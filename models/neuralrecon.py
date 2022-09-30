@@ -33,7 +33,7 @@ class NeuralRecon(nn.Module):
         if self.nnet_args:
             self.nnet = NNET(nnet_args)
             loadckpt = os.path.join(cfg.TRAIN.PATH, 'scannet.pt')
-            state_dict = torch.load(loadckpt, map_location=0)
+            state_dict = torch.load(loadckpt)
             self.nnet.load_state_dict(state_dict['model'])
             del state_dict
             # self.nnet.cuda()

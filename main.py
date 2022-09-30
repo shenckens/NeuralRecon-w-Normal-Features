@@ -330,7 +330,7 @@ def memory_and_time(warmup = True):
                 # use the latest checkpoint file
                 loadckpt = os.path.join(cfg.LOGDIR, ckpt)
                 logger.info("resuming " + str(loadckpt))
-                state_dict = torch.load(loadckpt, map_location=0)
+                state_dict = torch.load(loadckpt)
                 model.load_state_dict(state_dict['model'], strict=False)
                 model.eval()
                 # free state_dict variable from gpu
