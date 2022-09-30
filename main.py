@@ -396,5 +396,5 @@ if __name__ == '__main__':
         test()
     elif cfg.MODE == "time":
         results = memory_and_time()
-        with open('memory_and_time.pkl', 'wb') as f:
+        with open(os.path.join(cfg.LOGDIR, 'memory_and_time.pkl'), 'wb') as f:
             pickle.dump(results, f)
