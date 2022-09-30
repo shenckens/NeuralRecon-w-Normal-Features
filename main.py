@@ -340,7 +340,6 @@ def memory_and_time(warmup = True):
                 TestImgLoader.dataset.tsdf_cashe = {}
 
                 for batch_idx, sample in enumerate(TestImgLoader):
-                    sample.to(0)
                     with torch.no_grad():
                         # GPU warm-up
                         if warmup:
