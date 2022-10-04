@@ -117,15 +117,15 @@ class NeuralRecon(nn.Module):
                 # Resize normal imgs to fit backbone feature outputs and concat
                 # normal_prior_concat_imgs.
                 sizes = [(features[0][i].shape[2], features[0][i].shape[3]) for i in range(len(features[0]))]
-                # normals_features = [[T.Resize(size=size)(norm) for size in sizes] for norm in normals]
+                normals_features = [[T.Resize(size=size)(norm) for size in sizes] for norm in normals]
                 kappa_features = [[T.Resize(size=size)(kap) for size in sizes] for kap in kappas]
 
             concat_features = []
             for i in range(len(features)):
                 elements = []
                 for e in range(len(features[0])):
-                    # elements.append(torch.cat([features[i][e], normals_features[i][e], kappa_features[i][e]], dim=1))
-                    elements.append(torch.cat([features[i][e], kappa_features[i][e]], dim=1))
+                    elements.append(torch.cat([features[i][e], normals_features[i][e], kappa_features[i][e]], dim=1))
+                    # elements.append(torch.cat([features[i][e], kappa_features[i][e]], dim=1))
                     # elements.append(torch.cat([features[i][e], normals_features[i][e]], dim=1))
                 concat_features.append(elements)
             features = concat_features
