@@ -259,8 +259,6 @@ def train():
                 'optimizer': optimizer.state_dict()},
                 "{}/model_{:0>6}.ckpt".format(cfg.LOGDIR, epoch_idx))
 
-        break
-
 
 def test(from_latest=True):
     ckpt_list = []

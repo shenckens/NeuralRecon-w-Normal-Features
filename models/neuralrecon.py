@@ -11,7 +11,7 @@ from models.NNet.NNET import NNET
 from torchvision.utils import save_image
 import torchvision.transforms as T
 
-import matplotlib.pyplot as plt
+from PIL import Image
 
 
 class NeuralRecon(nn.Module):
@@ -118,7 +118,8 @@ class NeuralRecon(nn.Module):
                     kappa = normal_list[-1][:, 3:, :, :]
                     kappas.append(kappa)
                     if self.one_time:
-                        plt.savefig('Normalimagetest.png')
+                        im = Image.fromarray(normal)
+                        im.save("normalization_test.png")
                         self.one_time = False
 
 
