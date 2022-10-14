@@ -51,7 +51,7 @@ class NeuralRecon(nn.Module):
 
     def normalizer_normal_estimation(self, x):
         """ Normalizes the RGB images to the input range"""
-        return (x - [0.485, 0.456, 0.406].type_as(x)) / [0.229, 0.224, 0.225].type_as(x)
+        return (x - torch.Tensor([0.485, 0.456, 0.406]).type_as(x)) / torch.Tensor([0.229, 0.224, 0.225]).type_as(x)
 
 
     def forward(self, inputs, save_mesh=False):
