@@ -49,11 +49,6 @@ class NeuralRecon(nn.Module):
         """ Normalizes the RGB images to the input range"""
         return (x - self.pixel_mean.type_as(x)) / self.pixel_std.type_as(x)
 
-    def normalizer_normal_estimation(self, x):
-        """ Normalizes the RGB images to the input range"""
-        return (x - torch.Tensor([0.485, 0.456, 0.406]).view(-1, 1, 1).type_as(x)) / torch.Tensor([0.229, 0.224, 0.225]).view(-1, 1, 1).type_as(x)
-
-
     def forward(self, inputs, save_mesh=False):
         '''
 
@@ -96,7 +91,7 @@ class NeuralRecon(nn.Module):
         outputs = {}
         # Makes 9 elements of B, C, H, W.
         imgs = torch.unbind(inputs['imgs'], 1)
-        test_imgs = [self.normalizer_normal_estimation(img) for img in imgs]
+
         # Normalize imgs beforehand.
         imgs = [self.normalizer(img) for img in imgs]
 
@@ -111,15 +106,12 @@ class NeuralRecon(nn.Module):
             normals = []
             kappas = []
             with torch.no_grad():
-                for img in test_imgs:
+                for img in imgs:
                     normal_list, _, _ = self.nnet(img)
                     normal = normal_list[-1][:, :3, :, :]
                     normals.append(normal)
                     kappa = normal_list[-1][:, 3:, :, :]
                     kappas.append(kappa)
-                    if self.one_time:
-                        save_image(normal, 'normalizatointest.png')
-                        self.one_time = False
 
 
             # Normal rgb imgs through backbone feature extraction.
