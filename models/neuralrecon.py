@@ -11,6 +11,8 @@ from models.NNet.NNET import NNET
 from torchvision.utils import save_image
 import torchvision.transforms as T
 
+import matplotlib.pyplot as plt
+
 
 class NeuralRecon(nn.Module):
     '''
@@ -46,6 +48,10 @@ class NeuralRecon(nn.Module):
     def normalizer(self, x):
         """ Normalizes the RGB images to the input range"""
         return (x - self.pixel_mean.type_as(x)) / self.pixel_std.type_as(x)
+
+    def normalizer_normal_estimation(self, x):
+        """ Normalizes the RGB images to the input range"""
+        return (x - [0.485, 0.456, 0.406].type_as(x)) / [0.229, 0.224, 0.225].type_as(x)
 
 
     def forward(self, inputs, save_mesh=False):
@@ -90,7 +96,7 @@ class NeuralRecon(nn.Module):
         outputs = {}
         # Makes 9 elements of B, C, H, W.
         imgs = torch.unbind(inputs['imgs'], 1)
-
+        test_imgs = [self.normalizer_normal_estimation(img) for img in imgs]
         # Normalize imgs beforehand.
         imgs = [self.normalizer(img) for img in imgs]
 
@@ -101,16 +107,20 @@ class NeuralRecon(nn.Module):
             features = [self.backbone2d(img) for img in imgs]
 
             # Then do normal estimation with uncertainty
-            # in: normalized images; out: normals, uncertainties (kappa).
+            # in: normalized images; out: normals, uncertainties (kappa)
             normals = []
             kappas = []
             with torch.no_grad():
-                for img in imgs:
+                for img in test_imgs:
                     normal_list, _, _ = self.nnet(img)
                     normal = normal_list[-1][:, :3, :, :]
                     normals.append(normal)
                     kappa = normal_list[-1][:, 3:, :, :]
                     kappas.append(kappa)
+                    if self.one_time:
+                        plt.savefig('Normalimagetest.png')
+                        self.one_time = False
+
 
             # Normal rgb imgs through backbone feature extraction.
             if self.prior_through_backbone:
