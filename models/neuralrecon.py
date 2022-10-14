@@ -96,9 +96,12 @@ class NeuralRecon(nn.Module):
 
         # Add normal priors to images.
         if self.nnet_args:
-            # image feature extraction
-            # in: images; out: feature maps
+            # First do image feature extraction.
+            # in: normalized images; out: feature maps.
             features = [self.backbone2d(img) for img in imgs]
+
+            # Then do normal estimation with uncertainty
+            # in: normalized images; out: normals, uncertainties (kappa).
             normals = []
             kappas = []
             with torch.no_grad():
@@ -108,35 +111,37 @@ class NeuralRecon(nn.Module):
                     normals.append(normal)
                     kappa = normal_list[-1][:, 3:, :, :]
                     kappas.append(kappa)
+
             # Normal rgb imgs through backbone feature extraction.
             if self.prior_through_backbone:
+                # Testing feature extraction on 3-channel normal images.
                 # No kappas are added here.
                 normals_features = [self.backbone2d(normal) for normal in normals]
+
             # Normal imgs as features concatenated to original imgs' features.
             else:
-                # Resize normal imgs to fit backbone feature outputs and concat
-                # normal_prior_concat_imgs.
+                # Resize normal imgs to fit backbone feature outputs and concat.
                 sizes = [(features[0][i].shape[2], features[0][i].shape[3]) for i in range(len(features[0]))]
-                # normals_features = [[T.Resize(size=size)(norm) for size in sizes] for norm in normals]
+                normals_features = [[T.Resize(size=size)(norm) for size in sizes] for norm in normals]
                 kappa_features = [[T.Resize(size=size)(kap) for size in sizes] for kap in kappas]
 
             concat_features = []
             for i in range(len(features)):
                 elements = []
                 for e in range(len(features[0])):
-                    # elements.append(torch.cat([features[i][e], normals_features[i][e], kappa_features[i][e]], dim=1))
-                    elements.append(torch.cat([features[i][e], kappa_features[i][e]], dim=1))
+                    elements.append(torch.cat([features[i][e], normals_features[i][e], kappa_features[i][e]], dim=1))
+                    # elements.append(torch.cat([features[i][e], kappa_features[i][e]], dim=1))
                     # elements.append(torch.cat([features[i][e], normals_features[i][e]], dim=1))
                 concat_features.append(elements)
             features = concat_features
 
         else:
-            # image feature extraction
-            # in: images; out: feature maps
+            # Image feature extraction.
+            # in: normalized images; out: feature maps
             features = [self.backbone2d(img) for img in imgs]
 
         # coarse-to-fine decoder: SparseConv and GRU Fusion.
-        # in: image feature; out: sparse coords and tsdf
+        # in: image features; out: sparse coords and tsdf
         outputs, loss_dict = self.neucon_net(features, inputs, outputs)
 
         # fuse to global volume.
