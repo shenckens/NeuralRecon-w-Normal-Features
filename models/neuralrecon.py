@@ -118,8 +118,7 @@ class NeuralRecon(nn.Module):
                     kappa = normal_list[-1][:, 3:, :, :]
                     kappas.append(kappa)
                     if self.one_time:
-                        im = Image.fromarray(normal)
-                        im.save("normalization_test.png")
+                        save_image(normal, 'normalizatointest.png')
                         self.one_time = False
 
 
