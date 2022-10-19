@@ -117,8 +117,9 @@ class NeuralRecon(nn.Module):
                     normal = normal_list[-1][:, :3, :, :]
                     normals.append(normal)
                     kappa = normal_list[-1][:, 3:, :, :]
-                    alpha = self.kappa_to_alpha(kappa)
-                    kappas.append(alpha)
+                    # alpha = self.kappa_to_alpha(kappa)
+                    # kappas.append(alpha)
+                    kappas.append(kappa)
 
 
             # Normal rgb imgs through backbone feature extraction.
