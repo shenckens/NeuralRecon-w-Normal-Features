@@ -51,8 +51,8 @@ class NeuralRecon(nn.Module):
 
     def kappa_to_alpha(pred_kappa):
         alpha = ((2 * pred_kappa) / ((pred_kappa ** 2.0) + 1)) \
-                + ((np.exp(- pred_kappa * np.pi) * np.pi) / (1 + np.exp(- pred_kappa * np.pi)))
-        alpha = np.degrees(alpha)
+                + ((torch.exp(- pred_kappa * np.pi) * np.pi) / (1 + torch.exp(- pred_kappa * np.pi)))
+        alpha = torch.rad2deg(alpha)
         return alpha
 
     def forward(self, inputs, save_mesh=False):
