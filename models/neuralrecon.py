@@ -49,6 +49,12 @@ class NeuralRecon(nn.Module):
         """ Normalizes the RGB images to the input range"""
         return (x - self.pixel_mean.type_as(x)) / self.pixel_std.type_as(x)
 
+    def kappa_to_alpha(pred_kappa):
+        alpha = ((2 * pred_kappa) / ((pred_kappa ** 2.0) + 1)) \
+                + ((np.exp(- pred_kappa * np.pi) * np.pi) / (1 + np.exp(- pred_kappa * np.pi)))
+        alpha = np.degrees(alpha)
+        return alpha
+
     def forward(self, inputs, save_mesh=False):
         '''
 
@@ -111,7 +117,8 @@ class NeuralRecon(nn.Module):
                     normal = normal_list[-1][:, :3, :, :]
                     normals.append(normal)
                     kappa = normal_list[-1][:, 3:, :, :]
-                    kappas.append(kappa)
+                    alpha = self.kappa_to_alpha(kappa)
+                    kappas.append(alpha)
 
 
             # Normal rgb imgs through backbone feature extraction.
