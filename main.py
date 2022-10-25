@@ -367,7 +367,7 @@ def memory_and_time(warmup = True):
     stats['inference_mean'] = np.array(after_inference_mems).mean()
     stats['inference_std'] = np.array(after_inference_mems).std()
 
-    file = open(os.path.join(cfg.LOGDIR, 'GPU_and_time.json'), "w")
+    file = open(os.path.join(cfg.LOGDIR, 'reduced_GPU_and_time.json'), "w")
     json.dump(stats, file)
     file.close()
 
