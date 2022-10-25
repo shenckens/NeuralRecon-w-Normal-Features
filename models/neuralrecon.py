@@ -140,8 +140,8 @@ class NeuralRecon(nn.Module):
                 elements = []
                 for e in range(len(features[0])):
                     # elements.append(torch.cat([features[i][e], normals_features[i][e], kappa_features[i][e]], dim=1))
-                    # elements.append(torch.cat([features[i][e], kappa_features[i][e]], dim=1))
-                    elements.append(torch.cat([features[i][e], normals_features[i][e]], dim=1))
+                    elements.append(torch.cat([features[i][e], kappa_features[i][e]], dim=1))
+                    # elements.append(torch.cat([features[i][e], normals_features[i][e]], dim=1))
                 concat_features.append(elements)
             features = concat_features
 
