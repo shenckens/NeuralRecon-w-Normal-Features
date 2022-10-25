@@ -28,11 +28,11 @@ class NeuConNet(nn.Module):
                 ch_in = [80 * 2 * alpha + 1, 96 + 40 * 2 * alpha + 2 + 1, 48 + 24 * 2 * alpha + 2 + 1, 24 + 24 + 2 + 1]
             else:
                 # priors + kappa
-                ch_in = [80 * alpha + 1 + 4, 96 + 40 * alpha + 2 + 1 + 4, 48 + 24 * alpha + 2 + 1 + 4, 24 + 24 + 2 + 1]
+                # ch_in = [80 * alpha + 1 + 4, 96 + 40 * alpha + 2 + 1 + 4, 48 + 24 * alpha + 2 + 1 + 4, 24 + 24 + 2 + 1]
                 # kappa
                 # ch_in = [80 * alpha + 1 + 1, 96 + 40 * alpha + 2 + 1 + 1, 48 + 24 * alpha + 2 + 1 + 1, 24 + 24 + 2 + 1]
                 # priors
-                # ch_in = [80 * alpha + 1 + 3, 96 + 40 * alpha + 2 + 1 + 3, 48 + 24 * alpha + 2 + 1 + 3, 24 + 24 + 2 + 1]
+                ch_in = [80 * alpha + 1 + 3, 96 + 40 * alpha + 2 + 1 + 3, 48 + 24 * alpha + 2 + 1 + 3, 24 + 24 + 2 + 1]
         else:
             ch_in = [80 * alpha + 1, 96 + 40 * alpha + 2 + 1, 48 + 24 * alpha + 2 + 1, 24 + 24 + 2 + 1]
         channels = [96, 48, 24]
