@@ -18,7 +18,7 @@ TRAIN:
 
 TEST:
   # Change your own data path here
-  PATH: '/project/henckens/data/demo/neucon_demodata_b5f1'
+  PATH: '/project/henckens/data/demo/myfloor_iphone7'
   N_VIEWS: 9
   N_WORKERS: 1
 
