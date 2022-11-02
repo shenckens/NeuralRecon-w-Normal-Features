@@ -1,7 +1,7 @@
 # NeuralRecon w/ Normal Features: Improving Monocular 3D Indoor Scene Reconstruction
 <br/>
 
-> This work uses NeuralRecon as its backbone.
+> NOTE: This work uses NeuralRecon as its backbone.
 > NeuralRecon: Real-Time Coherent 3D Reconstruction from Monocular Video  
 > [Jiaming Sun](https://jiamingsun.ml)<sup>\*</sup>, [Yiming Xie](https://ymingxie.github.io)<sup>\*</sup>, [Linghao Chen](https://github.com/f-sky), [Xiaowei Zhou](http://www.cad.zju.edu.cn/home/xzhou/), [Hujun Bao](http://www.cad.zju.edu.cn/bao/)  
 > CVPR 2021 (Oral Presentation and Best Paper Candidate)
