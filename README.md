@@ -11,10 +11,10 @@
 
 ## TODO
 
-[x] Self-catputered data testing
-[ ] Light-weight feature extraction
-[ ] Prior feature optimisation
-[ ] Runtime optimisation
+- [x] Self-catputered data testing
+- [ ] Light-weight feature extraction
+- [ ] Prior feature optimisation
+- [ ] Runtime optimisation
 
 
 ## How to Use
