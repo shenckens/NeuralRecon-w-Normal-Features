@@ -1,13 +1,6 @@
 # NeuralRecon w/ Normal Features: Improving Real-Time Monocular 3D Indoor Scene Reconstruction
 <br/>
 
-> NOTE: This work uses NeuralRecon as its backbone.
-> NeuralRecon: Real-Time Coherent 3D Reconstruction from Monocular Video  
-> [Jiaming Sun](https://jiamingsun.ml)<sup>\*</sup>, [Yiming Xie](https://ymingxie.github.io)<sup>\*</sup>, [Linghao Chen](https://github.com/f-sky), [Xiaowei Zhou](http://www.cad.zju.edu.cn/home/xzhou/), [Hujun Bao](http://www.cad.zju.edu.cn/bao/)  
-> CVPR 2021 (Oral Presentation and Best Paper Candidate)
-
-<br/>
-
 ![Improvements over baseline model](imgs/header.png)
 
 ## How to Use
@@ -139,3 +132,8 @@ The training is seperated to two phases and the switching between phases is cont
 
 ## Acknowledgment
 I would like to thank the authors of NeuralRecon for making their code publicly available, providing the backbone for this work. Furthermore I'd like to thank 3DUniversum for working on this project. 
+
+> NOTE: This work uses NeuralRecon as its backbone.
+> NeuralRecon: Real-Time Coherent 3D Reconstruction from Monocular Video  
+> [Jiaming Sun](https://jiamingsun.ml)<sup>\*</sup>, [Yiming Xie](https://ymingxie.github.io)<sup>\*</sup>, [Linghao Chen](https://github.com/f-sky), [Xiaowei Zhou](http://www.cad.zju.edu.cn/home/xzhou/), [Hujun Bao](http://www.cad.zju.edu.cn/bao/)  
+> CVPR 2021 (Oral Presentation and Best Paper Candidate)
