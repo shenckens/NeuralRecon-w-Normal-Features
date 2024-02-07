@@ -1,5 +1,7 @@
-# NeuralRecon w/ Normal Features: Improving Monocular 3D Indoor Scene Reconstruction
+# NeuralRecon w/ Normal Features: Improving Real-Time Monocular 3D Indoor Scene Reconstruction
 <br/>
+
+![Improvements over baseline model](imgs/header.png)
 
 > NOTE: This work uses NeuralRecon as its backbone.
 > NeuralRecon: Real-Time Coherent 3D Reconstruction from Monocular Video  
@@ -7,15 +9,6 @@
 > CVPR 2021 (Oral Presentation and Best Paper Candidate)
 
 <br/>
-
-
-## TODO
-
-- [x] Self-catputered data testing
-- [ ] Light-weight feature extraction
-- [ ] Prior feature optimisation
-- [ ] Runtime optimisation
-
 
 ## How to Use
 
